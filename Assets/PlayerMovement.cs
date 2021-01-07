@@ -14,8 +14,24 @@ public class PlayerMovement : MonoBehaviour
     public float groundDistance = 0.4f;
     public LayerMask groundMask;
 
+    public AudioClip pickupSound;
+
     Vector3 velocity;
     bool isGrounded;
+
+    [SerializeField] private UI_Inventory uiInventory;
+    private bool uiEnabled = true;
+
+    private Inventory inventory;
+
+    private void Awake()
+    {
+        inventory = new Inventory();
+        uiInventory.SetInventory(inventory);
+    }
+
+    public Inventory GetInventory() { return inventory; }
+    public UI_Inventory GetUIInventory() { return uiInventory; }
 
     void Update()
     {
@@ -38,8 +54,23 @@ public class PlayerMovement : MonoBehaviour
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
 
+        if (Input.GetKeyDown("i"))
+        {
+            uiEnabled = !uiEnabled;
+            uiInventory.gameObject.SetActive(uiEnabled);
+        }
+
         velocity.y += gravity * Time.deltaTime;
 
         controller.Move(velocity * Time.deltaTime);
+    }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (hit.gameObject.CompareTag("Item"))
+        {
+            AudioSource.PlayClipAtPoint (pickupSound, transform.position);
+            hit.gameObject.GetComponent<PickupItem>().Consume(this);
+        }
     }
 }
